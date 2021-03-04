@@ -41,6 +41,7 @@ uint8_t SX126x::ModuleConfig(uint8_t packetType, uint32_t frequencyInHz, int8_t 
   if ( txPowerInDbm < -3 )
     txPowerInDbm = -3;
 
+  uint8_t rv = ERR_NONE;
   DefaultMode = defaultMode;
 
   if ( module1_ptr == nullptr ) {
@@ -72,19 +73,27 @@ uint8_t SX126x::ModuleConfig(uint8_t packetType, uint32_t frequencyInHz, int8_t 
     return ERR_UNSUPPORTED_MODE;
   }
 
+  ClearDeviceErrors();
   SetRegulatorMode(SX126X_REGULATOR_DC_DC);
   SetDio2AsRfSwitchCtrl(true);
-  SetDio3AsTcxoCtrl(SX126X_DIO3_OUTPUT_3_3, RADIO_TCXO_SETUP_TIME);
+  SetDio3AsTcxoCtrl(SX126X_DIO3_OUTPUT_3_3, SX126X_TCXO_SETUP_TIME);
   
   Calibrate( SX126X_CALIBRATE_ALL_BLOCKS );
+  uint16_t errors = GetDeviceErrors();
+
+  if ( errors & SX126X_MASK_CALIB_ERR ) {
+    Serial.print("SX126x: error, calibration failed: 0b");
+    Serial.println(errors, BIN);
+    rv = ERR_CALIBRATION_FAILED;
+  }
 
   SetStandby(SX126X_STANDBY_RC); 
   SetBufferBaseAddress(0, 0);
   SetPaConfig(0x04, 0x07, 0x00, 0x01);
-  SetPowerConfig(txPowerInDbm, SX126X_PA_RAMP_3400U);
+  SetPowerConfig(txPowerInDbm, SX126X_PA_RAMP_200U);
   SetRfFrequency(frequencyInHz);
 
-  return ERR_NONE;
+  return rv;
 }
 
 
@@ -268,6 +277,9 @@ void SX126x::Dio1Interrupt()
 
       if ( __txDoneHook != nullptr ) 
       {
+        // uint16_t devErrors = GetDeviceErrors();
+        // Serial.print("Tx Done getErrors = ");
+        // Serial.println(devErrors, BIN);
         __txDoneHook((irq & SX126X_IRQ_TIMEOUT) ? ERR_TX_TIMEOUT : ERR_NONE);
       }
     }
@@ -761,6 +773,12 @@ uint16_t SX126x::GetDeviceErrors(void) {
 }
 
 
+void SX126x::ClearDeviceErrors(void) {
+  uint8_t data;
+  SPIreadCommand(SX126X_CMD_CLEAR_DEVICE_ERRORS, &data, 1);
+}
+
+
 void SX126x::EnterDefaultMode(void) 
 {
   switch(DefaultMode) {
@@ -990,30 +1008,30 @@ void SX126x::SPItransfer(uint8_t cmd, bool write, uint8_t* dataOut, uint8_t* dat
 
   // send/receive all bytes
   if(write) {
-    //Serial.print("SPI write: CMD=0x");
-    //Serial.print(cmd, HEX);
-    //Serial.print(" DataOut: ");
+    // Serial.print("SPI write: CMD=0x");
+    // Serial.print(cmd, HEX);
+    // Serial.print(" DataOut: ");
     for(uint8_t n = 0; n < numBytes; n++) {
       uint8_t in = SPI.transfer(dataOut[n]);
-      //Serial.print(dataOut[n], HEX);
-      //Serial.print(" ");
+      // Serial.print(dataOut[n], HEX);
+      // Serial.print(" ");
     }
     //Serial.println();
   } else {
-    //Serial.print("SPI read:  CMD=0x");
-    //Serial.print(cmd, HEX);
+    // Serial.print("SPI read:  CMD=0x");
+    // Serial.print(cmd, HEX);
     // skip the first byte for read-type commands (status-only)
     uint8_t in = SPI.transfer(SX126X_CMD_NOP);
-    ////Serial.println((SX126X_CMD_NOP, HEX));
-    //Serial.print(" DataIn: ");
+    // Serial.println((SX126X_CMD_NOP, HEX));
+    // Serial.print(" DataIn: ");
 
     for(uint8_t n = 0; n < numBytes; n++) {
       dataIn[n] = SPI.transfer(SX126X_CMD_NOP);
-      ////Serial.println((SX126X_CMD_NOP, HEX));
-      //Serial.print(dataIn[n], HEX);
-      //Serial.print(" ");
+      // Serial.println((SX126X_CMD_NOP, HEX));
+      // Serial.print(dataIn[n], HEX);
+      // Serial.print(" ");
     }
-    //Serial.println();
+    // Serial.println();
   }
 
   // stop transfer

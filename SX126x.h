@@ -202,7 +202,7 @@
 #define SX126X_DIO3_OUTPUT_3_3                        0x07        //  7     0                                   3.3 V
 
 //Radio complete Wake-up Time with TCXO stabilisation time
-#define RADIO_TCXO_SETUP_TIME                         5           // [ms]
+#define SX126X_TCXO_SETUP_TIME                        5           // [ms]
 
 //SX126X_CMD_SET_PACKET_TYPE
 #define SX126X_PACKET_TYPE_GFSK                       0x00        //  7     0     packet type: GFSK
@@ -328,6 +328,7 @@
 #define SX126X_PLL_CALIB_ERR                         0b000000100  //  2     2                    PLL calibration failed
 #define SX126X_RC13M_CALIB_ERR                       0b000000010  //  1     1                    RC13M calibration failed
 #define SX126X_RC64K_CALIB_ERR                       0b000000001  //  0     0                    RC64K calibration failed
+#define SX126X_MASK_CALIB_ERR                        0b000111111
 
 //SX126X SPI register variables
 //SX126X_REG_LORA_SYNC_WORD_MSB + LSB
@@ -343,9 +344,6 @@
 
 //SX126X LORA Bandwidths
 const uint32_t SX126X_LORA_BANDWIDTHS[11] = { 7810, 15630, 31250, 62500, 125000, 250000, 500000, 0, 10420, 20830, 416700 };
-
-// Static DIO ISRs
-
 
 
 // Interface class
@@ -371,6 +369,7 @@ class SX126x {
     void      SetTxPower(int8_t txPowerInDbm);
     void      Dio1Interrupt(void);
     uint16_t  GetDeviceErrors(void);
+    void      ClearDeviceErrors(void);
     void      setTxDoneHook(void (*txHook)(uint8_t txStatus));
     void      setRxDoneHook(void (*rxHook)(uint8_t rxStatus, uint8_t *pdata, uint16_t len));
 
