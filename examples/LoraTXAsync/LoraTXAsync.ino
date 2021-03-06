@@ -61,10 +61,12 @@ uint8_t* data = new uint8_t[2];
 unsigned long startMillis = millis();
 
 void loop() {
-  data[0] = (i >> 8) & 0x00FF;
-  data[1] = i & 0x00FF;
-  startMillis = millis();
-  lora.SendAsync(data, 2);
+  if( lora.GetCurrentMode() != SX126X_STATUS_MODE_TX ) {
+    data[0] = (i >> 8) & 0x00FF;
+    data[1] = i & 0x00FF;
+    startMillis = millis();
+    lora.SendAsync(data, 2);
+  }
   
   // Do work while SX126x sends your message!
   delay(1000);
