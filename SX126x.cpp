@@ -67,7 +67,8 @@ uint8_t SX126x::ModuleConfig(uint8_t packetType, uint32_t frequencyInHz, int8_t 
   }
 
   if ( packetType == SX126X_PACKET_TYPE_LORA) {
-    SetPacketType(SX126X_PACKET_TYPE_LORA); //RadioSetModem( ( SX126x.ModulationParams.PacketType == PACKET_TYPE_GFSK ) ? MODEM_FSK : MODEM_LORA );
+    SetPacketType(SX126X_PACKET_TYPE_LORA); 
+    //RadioSetModem( ( SX126x.ModulationParams.PacketType == PACKET_TYPE_GFSK ) ? MODEM_FSK : MODEM_LORA );
   }
   else {
     return ERR_UNSUPPORTED_MODE;
@@ -76,7 +77,7 @@ uint8_t SX126x::ModuleConfig(uint8_t packetType, uint32_t frequencyInHz, int8_t 
   ClearDeviceErrors();
   SetRegulatorMode(SX126X_REGULATOR_DC_DC);
   SetDio2AsRfSwitchCtrl(true);
-  SetDio3AsTcxoCtrl(SX126X_DIO3_OUTPUT_3_3, SX126X_TCXO_SETUP_TIME);
+  SetDio3AsTcxoCtrl(SX126X_DIO3_OUTPUT_1_8, SX126X_TCXO_SETUP_TIME);
   
   Calibrate( SX126X_CALIBRATE_ALL_BLOCKS );
   uint16_t errors = GetDeviceErrors();
@@ -90,7 +91,7 @@ uint8_t SX126x::ModuleConfig(uint8_t packetType, uint32_t frequencyInHz, int8_t 
   SetStandby(SX126X_STANDBY_RC); 
   SetBufferBaseAddress(0, 0);
   SetPaConfig(0x04, 0x07, 0x00, 0x01);
-  SetPowerConfig(txPowerInDbm, SX126X_PA_RAMP_200U);
+  SetPowerConfig(txPowerInDbm, SX126X_PA_RAMP_800U);
   SetRfFrequency(frequencyInHz);
 
   return rv;
